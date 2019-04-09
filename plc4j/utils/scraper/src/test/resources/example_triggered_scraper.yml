@@ -54,3 +54,10 @@ jobs:
       test10: '%DB811:DBB1000:BYTE[8]'
       test11: '%DB811:DBX268.3:BOOL'
       test12: '%DB811:DBB270:BYTE[8]'
+
+  - name: triggered-demo-job3_prev_value
+      triggerConfig: (S7_TRIGGER_VAR,100,(%M0:USINT)>=(PREV))
+      sources:
+        - S7_PI
+      fields:
+        test1: '%DB810:DBW0:INT'

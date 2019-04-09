@@ -43,7 +43,8 @@ public class TriggerConfiguration{
     private static final double TOLERANCE_FLOATING_EQUALITY = 1e-6;
 
     private static final Pattern TRIGGER_STRATEGY_PATTERN =
-        Pattern.compile("\\((?<strategy>[A-Z_0-9]+),(?<scheduledInterval>\\d+)(,(\\((?<triggerVar>\\S+)\\))((?<comp>[!=<>]{1,2}))(\\((?<compVar>[a-z0-9.\\-]+)\\)))?\\)");
+        Pattern.compile("\\((?<strategy>[A-Z_0-9]+),(?<scheduledInterval>\\d+)(,(\\((?<triggerVar>\\S+)\\))((?<comp>[!=<>]{1,2}))(\\((?<compVar>[PREVa-z0-9.\\-]+)\\)))?\\)");
+    public static final String PREVIOUS_DEF = "PREV";
 
     private final TriggerType triggerType;
     private final Long scrapeInterval;
@@ -52,7 +53,10 @@ public class TriggerConfiguration{
     private Comparators comparatorType;
     private TriggeredScrapeJobImpl triggeredScrapeJobImpl;
 
-    private final Object compareValue;
+    //if trigger should be compared to previous value
+    private Boolean previousMode;
+
+    private Object compareValue;
     private final PlcField plcField;
 
     /**
@@ -71,6 +75,7 @@ public class TriggerConfiguration{
         this.scrapeInterval = parseScrapeInterval(scrapeInterval);
         this.triggerVariable = triggerVariable;
         this.comparator = comparator;
+        this.previousMode = false;
 
         if(this.triggerType.equals(TriggerType.S7_TRIGGER_VAR)) {
             //test for valid field-connection string, on exception quit job and return message to user
@@ -160,7 +165,7 @@ public class TriggerConfiguration{
             double currentValue;
             double refValue;
             try{
-                refValue = (double) compareValue;
+
                 if(value instanceof Short){
                     currentValue = ((Short) value).doubleValue();
                 }
@@ -182,6 +187,18 @@ public class TriggerConfiguration{
                     }
 
                 }
+                if(this.previousMode){
+                    if(this.compareValue==null){
+                        this.compareValue = currentValue;
+                        return true;
+                    }
+                    else{
+                        refValue = (double) compareValue;
+                    }
+                }
+                else {
+                    refValue = (double) compareValue;
+                }
 
                 //
 
@@ -191,20 +208,33 @@ public class TriggerConfiguration{
                 return false;
             }
 
+            boolean triggerResult;
             switch (this.comparatorType) {
                 case EQUAL:
-                    return isApproximately(currentValue,refValue, TOLERANCE_FLOATING_EQUALITY);
+                    triggerResult = isApproximately(currentValue,refValue, TOLERANCE_FLOATING_EQUALITY);
+                    break;
                 case UNEQUAL:
-                    return !isApproximately(currentValue,refValue, TOLERANCE_FLOATING_EQUALITY);
+                    triggerResult = !isApproximately(currentValue,refValue, TOLERANCE_FLOATING_EQUALITY);
+                    break;
                 case SMALLER:
-                    return currentValue < refValue;
+                    triggerResult = currentValue < refValue;
+                    break;
                 case SMALLER_EQUAL:
-                    return currentValue <= refValue;
+                    triggerResult = currentValue <= refValue;
+                    break;
                 case GREATER:
-                    return currentValue > refValue;
+                    triggerResult = currentValue > refValue;
+                    break;
                 case GREATER_EQUAL:
-                    return currentValue >= refValue;
+                    triggerResult = currentValue >= refValue;
+                    break;
+                default:
+                    triggerResult=false;
             }
+            if(triggerResult && previousMode){
+                this.compareValue = currentValue;
+            }
+            return triggerResult;
 
         }
         //should not happen, as fallback return false which always implies that no data is collected
@@ -306,6 +336,10 @@ public class TriggerConfiguration{
             try {
                 //everything fits to Double for conversion ... so for first step use only double
                 //ToDo if different handling dependent on specific datatype is needed then differ
+                if(PREVIOUS_DEF.equals(compareValue)){
+                    this.previousMode=true;
+                    return null;
+                }
                 return Double.parseDouble(compareValue);
             }
             catch (Exception e){

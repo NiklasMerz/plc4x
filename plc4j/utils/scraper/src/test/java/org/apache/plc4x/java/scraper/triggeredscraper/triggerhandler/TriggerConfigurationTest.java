@@ -52,6 +52,7 @@ class TriggerConfigurationTest {
             Arguments.of("(S7_TRIGGER_VAR,50,(%DB111:DBD10:REAL)>(33.3))",TriggerConfiguration.TriggerType.S7_TRIGGER_VAR, 50, TriggerConfiguration.Comparators.GREATER, 33.3),
             Arguments.of("(S7_TRIGGER_VAR,50,(%DB111:DBD10:REAL)>(33.3))",TriggerConfiguration.TriggerType.S7_TRIGGER_VAR, 50, TriggerConfiguration.Comparators.GREATER, 33.3),
             Arguments.of("(S7_TRIGGER_VAR,50,(%DB111:DBD10:REAL)>(-1))",TriggerConfiguration.TriggerType.S7_TRIGGER_VAR, 50, TriggerConfiguration.Comparators.GREATER, -1.0),
+            Arguments.of("(S7_TRIGGER_VAR,50,(%DB111:DBD10:REAL)>(PREV))",TriggerConfiguration.TriggerType.S7_TRIGGER_VAR, 50, TriggerConfiguration.Comparators.GREATER, null),
             Arguments.of("(SCHEDULED,1000)",TriggerConfiguration.TriggerType.SCHEDULED, 1000, null, null)
         );
     }
@@ -69,7 +70,8 @@ class TriggerConfigurationTest {
             Arguments.of("(S7_TRIGGER_VAR,50,(%DB111:DBX10.1:BOOL)<=(true))"),
             Arguments.of("(S7_TRIGGER_VAR,50,(%DB111:DBW10:INT)<=(true))"),
             Arguments.of("(MODBUS_TRIGGER_VAR,50)"),
-            Arguments.of("(MODBUS_TRIGGER_VAR,50,(%DB111:DBW10:INT)<=(11))")
+            Arguments.of("(MODBUS_TRIGGER_VAR,50,(%DB111:DBW10:INT)<=(11))"),
+            Arguments.of("(S7_TRIGGER_VAR,50,(%DB111:DBD10:REAL)>(prev))")
         );
     }
 
