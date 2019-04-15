@@ -140,6 +140,7 @@ public class TriggeredScraperImpl implements Scraper {
                             resultHandler,
                             (TriggeredScrapeJobImpl) tuple.getLeft());
                         // Add task to internal list
+                        System.out.println(task);
                         tasks.put(tuple.getLeft(), task);
                         ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(task,
                             0, tuple.getLeft().getScrapeRate(), TimeUnit.MILLISECONDS);

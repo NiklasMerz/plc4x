@@ -49,6 +49,8 @@ import java.util.stream.Collectors;
  * ToDo Implement the monitoring as well: PLC4X-90
  */
 public class TriggeredScraperTask implements ScraperTask {
+
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TriggeredScraperTask.class);
 
     private final PlcDriverManager driverManager;
@@ -221,5 +223,20 @@ public class TriggeredScraperTask implements ScraperTask {
 
     public long getRequestTimeoutMs() {
         return requestTimeoutMs;
+    }
+
+    @Override
+    public String toString() {
+        return "TriggeredScraperTask{" +
+            "driverManager=" + driverManager +
+            ", jobName='" + jobName + '\'' +
+            ", connectionAlias='" + connectionAlias + '\'' +
+            ", connectionString='" + connectionString + '\'' +
+            ", fields=" + fields +
+            ", requestTimeoutMs=" + requestTimeoutMs +
+            ", executorService=" + executorService +
+            ", resultHandler=" + resultHandler +
+            ", triggerHandler=" + triggerHandler +
+            '}';
     }
 }

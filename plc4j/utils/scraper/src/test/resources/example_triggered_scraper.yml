@@ -28,14 +28,12 @@ jobs:
     fields:
       test1: '%DB810:DBB0:USINT'
 
-
   - name: triggered-demo-job1
     triggerConfig: (S7_TRIGGER_VAR,10,(%M0.3:BOOL)==(true))
     sources:
       - S7_PI
     fields:
       test1: '%DB810:DBW0:INT'
-
 
   - name: triggered-demo-job2
     triggerConfig: (S7_TRIGGER_VAR,10,(%M0.7:BOOL)==(true))
@@ -55,9 +53,16 @@ jobs:
       test11: '%DB811:DBX268.3:BOOL'
       test12: '%DB811:DBB270:BYTE[8]'
 
-  - name: triggered-demo-job3_prev_value
-      triggerConfig: (S7_TRIGGER_VAR,100,(%M0:USINT)>=(PREV))
-      sources:
-        - S7_PI
-      fields:
-        test1: '%DB810:DBW0:INT'
+  - name: triggered-demo-job3-prev_value
+    triggerConfig: (S7_TRIGGER_VAR,100,(%M0:USINT)>=(PREV))
+    sources:
+      - S7_PI
+    fields:
+      test1: '%DB810:DBW0:INT'
+
+  - name: triggered-demo-job3-combinded-condition
+    triggerConfig: (S7_TRIGGER_VAR,10,(%M0.6:BOOL)==(true)OR(%M0.7:BOOL)==(true))
+    sources:
+      - S7_PI
+    fields:
+      test1: '%M0:USINT'

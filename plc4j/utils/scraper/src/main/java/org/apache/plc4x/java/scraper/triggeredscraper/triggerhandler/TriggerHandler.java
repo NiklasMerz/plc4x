@@ -29,6 +29,7 @@ import org.apache.plc4x.java.scraper.triggeredscraper.TriggeredScraperTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -37,7 +38,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class TriggerHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(TriggerHandler.class);
-    private static final String TRIGGER = "trigger";
 
     private final TriggerConfiguration triggerConfiguration;
     private final TriggeredScraperTask parentScraperTask;
@@ -87,14 +87,26 @@ public class TriggerHandler {
             connection = future.get(parentScraperTask.getRequestTimeoutMs(), TimeUnit.MILLISECONDS);
             LOGGER.trace("Connection to {} established: {}", parentScraperTask.getConnectionString(), connection);
             PlcReadRequest.Builder builder = connection.readRequestBuilder();
-            builder.addItem(TRIGGER, triggerConfiguration.getTriggerVariable());
+
+            Map<TriggerConfiguration.TriggerElement,String> variableMap = new HashMap<>();
+            for(TriggerConfiguration.TriggerElement triggerElement:triggerConfiguration.getTriggerElementList()){
+                String tempId = UUID.randomUUID().toString();
+                variableMap.put(triggerElement, tempId);
+                builder.addItem(tempId, triggerElement.getPlcFieldString());
+            }
+
             PlcReadResponse response = builder
                 .build()
                 .execute()
                 .get(parentScraperTask.getRequestTimeoutMs(), TimeUnit.MILLISECONDS);
 
+            //ensure correct order of acquired values
+            List<Object> acquiredValuesList = new ArrayList<>();
+            for(TriggerConfiguration.TriggerElement triggerElement:triggerConfiguration.getTriggerElementList()){
+                acquiredValuesList.add(response.getObject(variableMap.get(triggerElement)));
+            }
             //check if trigger condition from TriggerConfiguration is fulfilled
-            boolean trigger = triggerConfiguration.evaluateTrigger(response.getObject(TRIGGER));
+            boolean trigger = triggerConfiguration.evaluateTrigger(acquiredValuesList);
 
             //only trigger scraping of data on rising edge of trigger
             if(trigger && !this.lastTriggerState){
