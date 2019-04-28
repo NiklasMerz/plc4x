@@ -242,8 +242,10 @@ public class TriggerConfiguration{
                         if(triggerElement.getPreviousMode()){
                             if(triggerElement.getCompareValue()==null){
                                 triggerElement.setCompareValue(currentValue);
+                                triggerElement.setReservedCompareValue(currentValue);
                                 triggerResultList.add(true);
                                 skipComparison=true;
+                                return true;
                             }
                             else{
                                 refValue = (double) triggerElement.getCompareValue();
@@ -260,7 +262,7 @@ public class TriggerConfiguration{
                     }
 
                     boolean triggerResult = false;
-                    if(skipComparison) {
+                    if(!skipComparison) {
                         switch (triggerElement.getComparatorType()) {
                             case EQUAL:
                                 triggerResult = isApproximately(currentValue, refValue, TOLERANCE_FLOATING_EQUALITY);
@@ -284,8 +286,13 @@ public class TriggerConfiguration{
                                 triggerResult = false;
                         }
                     }
+
                     if(triggerResult && triggerElement.getPreviousMode()){
-                        triggerElement.setCompareValue(currentValue);
+                        triggerElement.setReservedCompareValue(currentValue);
+                        logger.debug("Subcondition matched. Reserved value: {}, current compare value {} for Job {}",
+                            triggerElement.getReservedCompareValue(),
+                            triggerElement.getCompareValue(),
+                            triggerElement.getTriggerJob());
                     }
                     triggerResultList.add(triggerResult);
 
@@ -297,7 +304,7 @@ public class TriggerConfiguration{
                 return false;
             }
             if(triggerResultList.size()>1) {
-                logger.info("{}",triggerResultList);
+                logger.trace("{}",triggerResultList);
                 boolean combinedResult=triggerResultList.get(0);
                 for (int countElements = 1; countElements < acquiredValuesList.size(); countElements++) {
                     switch (triggerElementList.get(countElements).getConcatType()){
@@ -312,9 +319,15 @@ public class TriggerConfiguration{
                             combinedResult = false;
                     }
                 }
+                if(combinedResult) {
+                    triggerElementList.forEach(triggerElement -> triggerElement.overrideCompareValue());
+                }
                 return combinedResult;
             }
             else{
+                if(triggerResultList.get(0)) {
+                    triggerElementList.forEach(triggerElement -> triggerElement.overrideCompareValue());
+                }
                 //return first result because its the only one
                 return triggerResultList.get(0);
             }
@@ -357,6 +370,8 @@ public class TriggerConfiguration{
                         triggerVar,
                         triggerStrategy);
 
+                    triggerElement.setTriggerJob(triggeredScrapeJob.getJobName());
+
                     triggerElements.add(triggerElement);
 
                     String concatConn = matcher.group("concatConn");
@@ -373,6 +388,7 @@ public class TriggerConfiguration{
                             triggerStrategy);
 
 
+                        triggerElement2.setTriggerJob(triggeredScrapeJob.getJobName());
                         triggerElements.add(triggerElement2);
 
                     }
@@ -453,6 +469,11 @@ public class TriggerConfiguration{
         private PlcField plcField;
         private String plcFieldString;
 
+        private String triggerJob;
+
+        //storage for overwrite if condition matched
+        private Object reservedCompareValue;
+
         public TriggerElement() {
             this.comparatorType = null;
             this.concatType = null;
@@ -460,6 +481,8 @@ public class TriggerConfiguration{
             this.compareValue = null;
             this.plcField = null;
             this.plcFieldString = null;
+            this.reservedCompareValue = null;
+            this.triggerJob = "Not yet defined";
         }
 
         public TriggerElement(Comparator comparatorType, ConcatType concatType, Boolean previousMode, Object compareValue, PlcField plcField, String plcFieldString) {
@@ -623,6 +646,29 @@ public class TriggerConfiguration{
 
         public void setCompareValue(Object compareValue) {
             this.compareValue = compareValue;
+        }
+
+        public Object getReservedCompareValue() {
+            return reservedCompareValue;
+        }
+
+        public void setReservedCompareValue(Object reservedCompareValue) {
+            this.reservedCompareValue = reservedCompareValue;
+        }
+
+        public String getTriggerJob() {
+            return triggerJob;
+        }
+
+        public void setTriggerJob(String triggerJob) {
+            this.triggerJob = triggerJob;
+        }
+
+        public void overrideCompareValue(){
+            if(this.previousMode && this.reservedCompareValue!=null){
+                logger.info("Compare value overridden, before: {}, now: {}; for Trigger {}",this.compareValue,this.reservedCompareValue,this.triggerJob);
+                this.compareValue = this.reservedCompareValue;
+            }
         }
     }
 }
