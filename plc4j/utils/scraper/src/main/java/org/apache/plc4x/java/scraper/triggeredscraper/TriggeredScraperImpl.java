@@ -89,6 +89,16 @@ public class TriggeredScraperImpl implements Scraper {
     }
 
     /**
+     * Creates a Scraper instance from a configuration.
+     * @param config Configuration to use.
+     * @param plcDriverManager external DriverManager
+     * @param resultHandler
+     */
+    public TriggeredScraperImpl(TriggeredScraperConfiguration config, PlcDriverManager plcDriverManager, ResultHandler resultHandler) throws ScraperException {
+        this(resultHandler, plcDriverManager, config.getJobs());
+    }
+
+    /**
      * Min Idle per Key is set to 1 for situations where the network is broken.
      * Then, on reconnect we can fail all getConnection calls (in the ScraperTask) fast until
      * (in the background) the idle connection is created and the getConnection call returns fast.
@@ -127,20 +137,19 @@ public class TriggeredScraperImpl implements Scraper {
                 tuple -> {
                     LOGGER.debug("Register task for job {} for conn {} ({}) at rate {} ms",
                         tuple.getLeft().getJobName(), tuple.getMiddle(), tuple.getRight(), tuple.getLeft().getScrapeRate());
-                    TriggeredScraperTask task =
-                        null;
+                    TriggeredScraperTask task;
                     try {
                         task = new TriggeredScraperTask(driverManager,
                             tuple.getLeft().getJobName(),
                             tuple.getMiddle(),
                             tuple.getRight(),
                             tuple.getLeft().getFields(),
-                            1_000,
+                            2_500,
                             executorService,
                             resultHandler,
                             (TriggeredScrapeJobImpl) tuple.getLeft());
                         // Add task to internal list
-                        System.out.println(task);
+                        LOGGER.info("Task {} added to scheduling", task);
                         tasks.put(tuple.getLeft(), task);
                         ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(task,
                             0, tuple.getLeft().getScrapeRate(), TimeUnit.MILLISECONDS);

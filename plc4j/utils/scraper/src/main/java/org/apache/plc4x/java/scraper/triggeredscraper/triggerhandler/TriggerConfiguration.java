@@ -189,6 +189,9 @@ public class TriggerConfiguration{
 
         public boolean evaluateTrigger() throws ScraperException {
             List<Boolean> triggerResultList = new ArrayList<>();
+            if(logger.isTraceEnabled()){
+                logger.trace("eval values: {}",acquiredValuesList);
+            }
             for(int countElements=0; countElements<acquiredValuesList.size();countElements++){
                 TriggerElement triggerElement = triggerElementList.get(countElements);
                 Object acquiredObject = acquiredValuesList.get(countElements);
@@ -244,6 +247,7 @@ public class TriggerConfiguration{
                                 triggerElement.setCompareValue(currentValue);
                                 triggerElement.setReservedCompareValue(currentValue);
                                 triggerResultList.add(true);
+                                logger.trace("Initially set compare value to {}",currentValue);
                                 skipComparison=true;
                                 return true;
                             }
