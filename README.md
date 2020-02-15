@@ -63,6 +63,7 @@ PLC4X also integrates with other Apache projects, such as:
 * [Apache Kafka-Connect](https://kafka.apache.org)
 * [Apache Karaf](https://karaf.apache.org/)
 * [Apache NiFi](https://nifi.apache.org/)
+* [Apache Cordova](https://cordova.apache.org/)
 
 ## Getting started
 
